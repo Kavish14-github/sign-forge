@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import toast from "react-hot-toast";
@@ -17,6 +17,13 @@ export default function SignDocument() {
     pdfFile, pdfUrl, numPages, currentPage,
     setNumPages, loadPDF, setPage, getPdfBytes,
   } = usePDFDocument();
+
+  useEffect(() => {
+    document.title = "Sign PDF Online Free — Add Signature to PDF | SnapSign";
+    document.querySelector('meta[name="description"]')?.setAttribute("content",
+      "Add your signature to any PDF document for free. Upload PDF, place signature, download signed document. No account, no server upload. 100% private."
+    );
+  }, []);
 
   const [signatureUrl, setSignatureUrl] = useState(null);
   const [signatureBytes, setSignatureBytes] = useState(null);

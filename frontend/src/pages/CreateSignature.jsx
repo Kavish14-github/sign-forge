@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
 import Navbar from "../components/layout/Navbar";
@@ -17,6 +17,13 @@ const TABS = [
 export default function CreateSignature() {
   const [activeTab, setActiveTab] = useState("draw");
   const [signatureDataUrl, setSignatureDataUrl] = useState(null);
+
+  useEffect(() => {
+    document.title = "Create Signature Online Free — Draw, Type, or Upload | SnapSign";
+    document.querySelector('meta[name="description"]')?.setAttribute("content",
+      "Create your signature online for free. Draw with mouse, type in handwriting font, or upload a photo. No account needed. Download as transparent PNG."
+    );
+  }, []);
 
   const handleSignatureReady = useCallback((dataUrl) => {
     setSignatureDataUrl(dataUrl);

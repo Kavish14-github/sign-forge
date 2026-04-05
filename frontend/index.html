@@ -3,11 +3,127 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>SnapSign — Local-First Document Signing</title>
-    <meta name="description" content="A local-first, zero-server document signing tool. No accounts, no subscriptions, no watermarks." />
+
+    <!-- Primary SEO -->
+    <title>SnapSign — Sign PDF Online Free | No Account, No Upload</title>
+    <meta name="description" content="Sign PDF documents for free directly in your browser. No account, no upload, no watermarks. Draw, type, or upload your signature. 100% private — your files never leave your device." />
+    <meta name="keywords" content="sign pdf online free, free document signing, add signature to pdf, esignature free, sign pdf without account, pdf signer no login, free alternative to docusign, online pdf signature tool, sign documents free, digital signature free" />
+    <meta name="author" content="SnapSign" />
+    <link rel="canonical" href="https://snap-sign.com/" />
+
+    <!-- Open Graph (Facebook, LinkedIn, iMessage) -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://snap-sign.com/" />
+    <meta property="og:title" content="SnapSign — Sign PDF Online Free | No Account Needed" />
+    <meta property="og:description" content="Sign PDF documents for free in your browser. No account, no upload, no watermarks. 100% private — files never leave your device." />
+    <meta property="og:site_name" content="SnapSign" />
+    <meta property="og:locale" content="en_US" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="SnapSign — Sign PDF Online Free" />
+    <meta name="twitter:description" content="Sign PDF documents for free in your browser. No account, no upload, no watermarks. 100% private." />
+
+    <!-- Robots -->
+    <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large" />
+    <meta name="googlebot" content="index, follow" />
+
+    <!-- Favicon -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✍️</text></svg>" />
+
+    <!-- Structured Data (JSON-LD) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "SnapSign",
+      "url": "https://snap-sign.com",
+      "description": "Sign PDF documents for free directly in your browser. No account, no upload, no watermarks. Draw, type, or upload your signature. 100% private.",
+      "applicationCategory": "BusinessApplication",
+      "operatingSystem": "Any",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "featureList": [
+        "Sign PDF documents online for free",
+        "Draw signature with mouse or touchpad",
+        "Type signature in handwriting font",
+        "Upload photo of handwritten signature",
+        "Extract blue ink from signature photo",
+        "Drag and drop signature placement on PDF",
+        "Adjust signature opacity, rotation, and scale",
+        "Download signed PDF instantly",
+        "Works offline after first load",
+        "No account or login required",
+        "No file upload to any server",
+        "No watermarks on documents",
+        "100% browser-based processing"
+      ],
+      "browserRequirements": "Requires a modern web browser with JavaScript enabled",
+      "softwareVersion": "1.0.0"
+    }
+    </script>
+
+    <!-- FAQ Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "Is SnapSign really free?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes, SnapSign is completely free with no hidden charges, no subscriptions, and no watermarks on your documents."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Do my files get uploaded to a server?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "No. SnapSign processes everything locally in your browser. Your PDF and signature files never leave your device."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Do I need to create an account?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "No. SnapSign requires no account, no login, and no email. Just open the website and start signing."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How do I sign a PDF with SnapSign?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "1) Create your signature by drawing, typing, or uploading a photo. 2) Upload your PDF. 3) Drag your signature to the right position. 4) Click Apply & Download to get your signed PDF."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Does SnapSign work offline?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes. After the first load, SnapSign works completely offline with no internet connection required."
+          }
+        }
+      ]
+    }
+    </script>
   </head>
   <body>
+    <noscript>
+      <div style="padding:40px;text-align:center;font-family:system-ui,sans-serif;color:#E8E8FF;background:#0A0A0F;min-height:100vh;">
+        <h1>SnapSign</h1>
+        <p>Sign PDF documents for free in your browser. No account, no upload, no watermarks.</p>
+        <p style="margin-top:20px;color:#8888AA;">Please enable JavaScript to use SnapSign.</p>
+      </div>
+    </noscript>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>

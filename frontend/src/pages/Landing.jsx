@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/layout/Navbar";
@@ -46,6 +47,13 @@ const steps = [
 
 export default function Landing() {
   const navigate = useNavigate();
+
+  useEffect(() => {
+    document.title = "SnapSign — Sign PDF Online Free | No Account, No Upload";
+    document.querySelector('meta[name="description"]')?.setAttribute("content",
+      "Sign PDF documents for free directly in your browser. No account, no upload, no watermarks. Draw, type, or upload your signature. 100% private."
+    );
+  }, []);
 
   return (
     <>
