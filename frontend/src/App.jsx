@@ -5,6 +5,8 @@ import Landing from './pages/Landing'
 import CreateSignature from './pages/CreateSignature'
 import SignDocument from './pages/SignDocument'
 
+const basename = import.meta.env.BASE_URL.replace(/\/$/, '')
+
 function AnimatedRoutes() {
   const location = useLocation()
 
@@ -16,7 +18,7 @@ function AnimatedRoutes() {
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         transition={{ duration: 0.2 }}
-        className="w-full min-h-screen"
+        style={{ width: '100%', minHeight: '100vh' }}
       >
         <Routes location={location}>
           <Route path="/" element={<Landing />} />
@@ -30,7 +32,7 @@ function AnimatedRoutes() {
 
 function App() {
   return (
-    <Router>
+    <Router basename={basename}>
       <Toaster
         position="bottom-right"
         toastOptions={{
