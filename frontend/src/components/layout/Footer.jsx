@@ -9,7 +9,7 @@ export default function Footer() {
       }}
     >
       <p style={{ fontSize: 14, color: "#8888AA" }}>
-        SignForge &mdash; Your signature. Your device. Always private.
+        SnapSign &mdash; Your signature. Your device. Always private.
       </p>
       <div
         style={{

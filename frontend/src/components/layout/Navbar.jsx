@@ -39,7 +39,7 @@ export default function Navbar() {
             textShadow: "0 0 24px rgba(108,99,255,0.3)",
           }}
         >
-          SignForge
+          SnapSign
         </Link>
 
         {/* Status — right corner */}

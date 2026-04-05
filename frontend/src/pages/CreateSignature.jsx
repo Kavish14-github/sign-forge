@@ -26,7 +26,7 @@ export default function CreateSignature() {
     if (!signatureDataUrl) return;
     const link = document.createElement("a");
     link.href = signatureDataUrl;
-    link.download = "signforge_signature.png";
+    link.download = "snapsign_signature.png";
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);

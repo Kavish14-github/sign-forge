@@ -1,7 +1,7 @@
 import { useState, useCallback, useRef } from 'react';
 
 /**
- * Custom React hook for managing PDF document state in SignForge.
+ * Custom React hook for managing PDF document state in SnapSign.
  */
 export default function usePDFDocument() {
   const [pdfFile, setPdfFile] = useState(null);

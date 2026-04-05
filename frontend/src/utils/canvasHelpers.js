@@ -1,5 +1,5 @@
 /**
- * Canvas utility functions for SignForge signature drawing and processing.
+ * Canvas utility functions for SnapSign signature drawing and processing.
  */
 
 /**
@@ -164,9 +164,9 @@ export function canvasToBlob(canvas, type = 'image/png', quality = 1) {
  * Downloads the canvas content as a PNG file.
  *
  * @param {HTMLCanvasElement} canvas
- * @param {string} [filename='signforge_signature.png']
+ * @param {string} [filename='snapsign_signature.png']
  */
-export function downloadCanvasAsPNG(canvas, filename = 'signforge_signature.png') {
+export function downloadCanvasAsPNG(canvas, filename = 'snapsign_signature.png') {
   const dataUrl = canvas.toDataURL('image/png');
   const link = document.createElement('a');
   link.href = dataUrl;

@@ -41,7 +41,7 @@ export async function embedSignatureInPDF(
 /**
  * Triggers a browser download of PDF bytes as a file.
  */
-export function downloadPDF(pdfBytes, filename = 'signforge_signed.pdf') {
+export function downloadPDF(pdfBytes, filename = 'snapsign_signed.pdf') {
   const blob = new Blob([pdfBytes], { type: 'application/pdf' });
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');

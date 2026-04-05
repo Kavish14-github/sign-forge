@@ -25,7 +25,7 @@ const features = [
   {
     icon: "\u{1F4F4}",
     title: "Works Offline",
-    desc: "After first load, SignForge works completely offline. No internet required.",
+    desc: "After first load, SnapSign works completely offline. No internet required.",
     color: "#00D9FF",
     colorAlpha: "rgba(0,217,255,",
   },
@@ -113,7 +113,7 @@ export default function Landing() {
           }}
           variants={fadeUp} initial="hidden" animate="visible" custom={0}
         >
-          Sign<span style={{ color: "#6C63FF" }}>Forge</span>
+          Snap<span style={{ color: "#6C63FF" }}>Sign</span>
         </motion.h1>
 
         <motion.p
@@ -186,7 +186,7 @@ export default function Landing() {
           viewport={{ once: true }}
           transition={{ duration: 0.5 }}
         >
-          Why SignForge?
+          Why SnapSign?
         </motion.h2>
         <motion.p
           style={{ fontSize: 15, color: "#8888AA", textAlign: "center", marginBottom: 56, maxWidth: 480 }}
