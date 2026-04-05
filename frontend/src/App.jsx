@@ -1,11 +1,43 @@
+import { lazy, Suspense } from 'react'
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Toaster } from 'react-hot-toast'
 import Landing from './pages/Landing'
-import CreateSignature from './pages/CreateSignature'
-import SignDocument from './pages/SignDocument'
+
+const CreateSignature = lazy(() => import('./pages/CreateSignature'))
+const SignDocument = lazy(() => import('./pages/SignDocument'))
 
 const basename = import.meta.env.BASE_URL.replace(/\/$/, '')
+
+function LoadingScreen() {
+  return (
+    <div
+      style={{
+        width: '100%',
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: '#0A0A0F',
+      }}
+    >
+      <div style={{ textAlign: 'center' }}>
+        <div
+          style={{
+            width: 32,
+            height: 32,
+            border: '3px solid rgba(108,99,255,0.15)',
+            borderTopColor: '#6C63FF',
+            borderRadius: '50%',
+            animation: 'spin 0.8s linear infinite',
+            margin: '0 auto 16px',
+          }}
+        />
+        <p style={{ color: '#8888AA', fontSize: 14 }}>Loading...</p>
+      </div>
+    </div>
+  )
+}
 
 function AnimatedRoutes() {
   const location = useLocation()
@@ -20,11 +52,13 @@ function AnimatedRoutes() {
         transition={{ duration: 0.2 }}
         style={{ width: '100%', minHeight: '100vh' }}
       >
-        <Routes location={location}>
-          <Route path="/" element={<Landing />} />
-          <Route path="/create" element={<CreateSignature />} />
-          <Route path="/sign" element={<SignDocument />} />
-        </Routes>
+        <Suspense fallback={<LoadingScreen />}>
+          <Routes location={location}>
+            <Route path="/" element={<Landing />} />
+            <Route path="/create" element={<CreateSignature />} />
+            <Route path="/sign" element={<SignDocument />} />
+          </Routes>
+        </Suspense>
       </motion.div>
     </AnimatePresence>
   )
