@@ -31,12 +31,9 @@ export default function CreateSignature() {
 
   const handleDownload = useCallback(() => {
     if (!signatureDataUrl) return;
-    const link = document.createElement("a");
-    link.href = signatureDataUrl;
-    link.download = "snapsign_signature.png";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    import("../utils/canvasHelpers").then(({ downloadDataUrlAsPNG }) => {
+      downloadDataUrlAsPNG(signatureDataUrl, "snapsign_signature.png");
+    });
     toast.success("File never left your device", {
       iconTheme: { primary: "#00FF94", secondary: "#111118" },
     });

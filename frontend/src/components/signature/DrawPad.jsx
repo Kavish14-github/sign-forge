@@ -9,14 +9,17 @@ const BASELINE_Y_RATIO = 0.75;
 
 function drawBaseline(canvas) {
   const ctx = canvas.getContext("2d");
+  // Use CSS display dimensions (not canvas.width which includes DPR scaling)
+  const displayWidth = parseInt(canvas.style.width) || canvas.width;
+  const displayHeight = parseInt(canvas.style.height) || canvas.height;
   ctx.save();
   ctx.setLineDash([6, 4]);
   ctx.strokeStyle = "rgba(255,255,255,0.08)";
   ctx.lineWidth = 1;
   ctx.beginPath();
-  const y = Math.round(canvas.height * BASELINE_Y_RATIO) + 0.5;
+  const y = Math.round(displayHeight * BASELINE_Y_RATIO) + 0.5;
   ctx.moveTo(0, y);
-  ctx.lineTo(canvas.width, y);
+  ctx.lineTo(displayWidth, y);
   ctx.stroke();
   ctx.restore();
 }
@@ -33,8 +36,14 @@ export default function DrawPad({ onSignatureReady }) {
     const canvas = canvasRef.current;
     const container = containerRef.current;
     if (!canvas || !container) return;
-    canvas.width = container.clientWidth;
-    canvas.height = CANVAS_HEIGHT;
+    const dpr = window.devicePixelRatio || 1;
+    const displayWidth = container.clientWidth;
+    canvas.width = displayWidth * dpr;
+    canvas.height = CANVAS_HEIGHT * dpr;
+    canvas.style.width = displayWidth + "px";
+    canvas.style.height = CANVAS_HEIGHT + "px";
+    const ctx = canvas.getContext("2d");
+    ctx.scale(dpr, dpr);
     drawBaseline(canvas);
   }, []);
 

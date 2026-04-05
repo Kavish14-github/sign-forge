@@ -9,7 +9,9 @@ const FONT_FAMILY = "Dancing Script";
 
 function renderTypedSignature(canvas, text, fontSize) {
   const ctx = canvas.getContext("2d");
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  const displayWidth = parseInt(canvas.style.width) || canvas.width;
+  const displayHeight = parseInt(canvas.style.height) || canvas.height;
+  ctx.clearRect(0, 0, displayWidth, displayHeight);
   if (!text.trim()) return;
 
   const font = `${fontSize}px '${FONT_FAMILY}', cursive`;
@@ -17,8 +19,8 @@ function renderTypedSignature(canvas, text, fontSize) {
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
 
-  const x = canvas.width / 2;
-  const y = canvas.height / 2;
+  const x = displayWidth / 2;
+  const y = displayHeight / 2;
 
   ctx.fillStyle = INK_COLOR;
   ctx.globalAlpha = 0.06;
@@ -40,8 +42,14 @@ export default function TypeSignature({ onSignatureReady }) {
     const canvas = canvasRef.current;
     const container = containerRef.current;
     if (!canvas || !container) return;
-    canvas.width = container.clientWidth;
-    canvas.height = CANVAS_HEIGHT;
+    const dpr = window.devicePixelRatio || 1;
+    const displayWidth = container.clientWidth;
+    canvas.width = displayWidth * dpr;
+    canvas.height = CANVAS_HEIGHT * dpr;
+    canvas.style.width = displayWidth + "px";
+    canvas.style.height = CANVAS_HEIGHT + "px";
+    const ctx = canvas.getContext("2d");
+    ctx.scale(dpr, dpr);
     renderTypedSignature(canvas, text, fontSize);
     onSignatureReady?.(text.trim() ? canvas.toDataURL("image/png") : null);
   }, [text, fontSize, onSignatureReady]);

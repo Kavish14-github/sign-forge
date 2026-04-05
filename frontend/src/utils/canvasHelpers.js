@@ -162,16 +162,75 @@ export function canvasToBlob(canvas, type = 'image/png', quality = 1) {
 
 /**
  * Downloads the canvas content as a PNG file.
+ * Uses toBlob for reliable mobile support (iOS Safari).
  *
  * @param {HTMLCanvasElement} canvas
  * @param {string} [filename='snapsign_signature.png']
  */
 export function downloadCanvasAsPNG(canvas, filename = 'snapsign_signature.png') {
-  const dataUrl = canvas.toDataURL('image/png');
+  // Create a temp canvas at the actual pixel dimensions to avoid DPI issues
+  const tempCanvas = document.createElement('canvas');
+  tempCanvas.width = canvas.width;
+  tempCanvas.height = canvas.height;
+  const ctx = tempCanvas.getContext('2d');
+  ctx.drawImage(canvas, 0, 0);
+
+  if (tempCanvas.toBlob) {
+    tempCanvas.toBlob((blob) => {
+      if (!blob) return;
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      // iOS Safari needs the link in the DOM and a slight delay
+      link.style.display = 'none';
+      document.body.appendChild(link);
+      setTimeout(() => {
+        link.click();
+        setTimeout(() => {
+          document.body.removeChild(link);
+          URL.revokeObjectURL(url);
+        }, 100);
+      }, 0);
+    }, 'image/png');
+  } else {
+    // Fallback for very old browsers
+    const dataUrl = tempCanvas.toDataURL('image/png');
+    const link = document.createElement('a');
+    link.href = dataUrl;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+}
+
+/**
+ * Downloads a data URL as a file. Mobile-safe.
+ *
+ * @param {string} dataUrl
+ * @param {string} [filename='snapsign_signature.png']
+ */
+export function downloadDataUrlAsPNG(dataUrl, filename = 'snapsign_signature.png') {
+  // Convert data URL to blob for reliable mobile download
+  const arr = dataUrl.split(',');
+  const mime = arr[0].match(/:(.*?);/)?.[1] || 'image/png';
+  const bstr = atob(arr[1]);
+  const u8arr = new Uint8Array(bstr.length);
+  for (let i = 0; i < bstr.length; i++) u8arr[i] = bstr.charCodeAt(i);
+  const blob = new Blob([u8arr], { type: mime });
+
+  const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
-  link.href = dataUrl;
+  link.href = url;
   link.download = filename;
+  link.style.display = 'none';
   document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
+  setTimeout(() => {
+    link.click();
+    setTimeout(() => {
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    }, 100);
+  }, 0);
 }
