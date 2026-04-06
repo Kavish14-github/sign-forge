@@ -15,6 +15,10 @@ const fadeUp = {
   }),
 };
 
+// Large margin ensures whileInView triggers immediately on page load,
+// so crawlers (which don't scroll) see all content as opacity: 1.
+const scrollViewport = { once: true, margin: "0px 0px 200% 0px" };
+
 const features = [
   {
     icon: "\u{1F6E1}\uFE0F",
@@ -191,7 +195,7 @@ export default function Landing() {
           style={{ fontSize: "clamp(1.8rem, 4vw, 2.5rem)", fontWeight: 700, textAlign: "center", marginBottom: 16 }}
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
+          viewport={scrollViewport}
           transition={{ duration: 0.5 }}
         >
           Why SnapSign?
@@ -200,7 +204,7 @@ export default function Landing() {
           style={{ fontSize: 15, color: "#8888AA", textAlign: "center", marginBottom: 56, maxWidth: 480 }}
           initial={{ opacity: 0, y: 12 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
+          viewport={scrollViewport}
           transition={{ duration: 0.5, delay: 0.1 }}
         >
           Built for people who care about privacy and simplicity.
@@ -220,7 +224,7 @@ export default function Landing() {
               key={f.title}
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-60px" }}
+              viewport={scrollViewport}
               transition={{ duration: 0.5, delay: i * 0.12 }}
               style={{
                 position: "relative",
@@ -312,7 +316,7 @@ export default function Landing() {
           style={{ fontSize: "clamp(1.8rem, 4vw, 2.5rem)", fontWeight: 700, textAlign: "center", marginBottom: 64 }}
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
+          viewport={scrollViewport}
           transition={{ duration: 0.5 }}
         >
           How It Works
@@ -333,7 +337,7 @@ export default function Landing() {
               style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center" }}
               initial={{ opacity: 0, y: 24 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-40px" }}
+              viewport={scrollViewport}
               transition={{ duration: 0.5, delay: i * 0.15 }}
             >
               <div
@@ -366,7 +370,7 @@ export default function Landing() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
+          viewport={scrollViewport}
           transition={{ duration: 0.5 }}
         >
           <h2 style={{ fontSize: "clamp(1.5rem, 3vw, 2rem)", fontWeight: 700, marginBottom: 16 }}>
