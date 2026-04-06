@@ -15,9 +15,14 @@ const fadeUp = {
   }),
 };
 
-// Large margin ensures whileInView triggers immediately on page load,
-// so crawlers (which don't scroll) see all content as opacity: 1.
-const scrollViewport = { once: true, margin: "0px 0px 200% 0px" };
+// For below-fold sections: animate on mount with delay instead of whileInView.
+// This ensures content is always opacity:1 in the final DOM state,
+// so crawlers (which don't scroll) can index everything.
+const sectionFadeUp = (delay = 0) => ({
+  initial: { opacity: 0, y: 20 },
+  animate: { opacity: 1, y: 0 },
+  transition: { duration: 0.5, delay, ease: "easeOut" },
+});
 
 const features = [
   {
@@ -193,19 +198,13 @@ export default function Landing() {
       >
         <motion.h2
           style={{ fontSize: "clamp(1.8rem, 4vw, 2.5rem)", fontWeight: 700, textAlign: "center", marginBottom: 16 }}
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={scrollViewport}
-          transition={{ duration: 0.5 }}
+          {...sectionFadeUp(0.6)}
         >
           Why SnapSign?
         </motion.h2>
         <motion.p
           style={{ fontSize: 15, color: "#8888AA", textAlign: "center", marginBottom: 56, maxWidth: 480 }}
-          initial={{ opacity: 0, y: 12 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={scrollViewport}
-          transition={{ duration: 0.5, delay: 0.1 }}
+          {...sectionFadeUp(0.7)}
         >
           Built for people who care about privacy and simplicity.
         </motion.p>
@@ -222,10 +221,7 @@ export default function Landing() {
           {features.map((f, i) => (
             <motion.div
               key={f.title}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={scrollViewport}
-              transition={{ duration: 0.5, delay: i * 0.12 }}
+              {...sectionFadeUp(0.8 + i * 0.12)}
               style={{
                 position: "relative",
                 background: "rgba(17,17,24,0.6)",
@@ -314,10 +310,7 @@ export default function Landing() {
       >
         <motion.h2
           style={{ fontSize: "clamp(1.8rem, 4vw, 2.5rem)", fontWeight: 700, textAlign: "center", marginBottom: 64 }}
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={scrollViewport}
-          transition={{ duration: 0.5 }}
+          {...sectionFadeUp(1.2)}
         >
           How It Works
         </motion.h2>
@@ -335,10 +328,7 @@ export default function Landing() {
             <motion.div
               key={s.num}
               style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center" }}
-              initial={{ opacity: 0, y: 24 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={scrollViewport}
-              transition={{ duration: 0.5, delay: i * 0.15 }}
+              {...sectionFadeUp(1.3 + i * 0.15)}
             >
               <div
                 style={{
@@ -368,10 +358,7 @@ export default function Landing() {
         }}
       >
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={scrollViewport}
-          transition={{ duration: 0.5 }}
+          {...sectionFadeUp(1.8)}
         >
           <h2 style={{ fontSize: "clamp(1.5rem, 3vw, 2rem)", fontWeight: 700, marginBottom: 16 }}>
             Ready to sign?
