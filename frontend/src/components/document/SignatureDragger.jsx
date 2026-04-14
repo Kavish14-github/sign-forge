@@ -1,11 +1,14 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 
 export default function SignatureDragger({
+  sigId,
   signatureUrl,
   position,
   size,
   opacity,
   rotation,
+  isSelected,
+  onSelect,
   onPositionChange,
   onSizeChange,
   containerRef,
@@ -160,10 +163,11 @@ export default function SignatureDragger({
 
   if (!signatureUrl) return null;
 
-  const showBorder = isHovered || isDragging || isResizing;
+  const showBorder = isSelected || isHovered || isDragging || isResizing;
 
   return (
     <div
+      data-sig-id={sigId}
       style={{
         position: "absolute",
         left: position.x,
@@ -173,12 +177,18 @@ export default function SignatureDragger({
         opacity,
         transform: `rotate(${rotation}deg)`,
         cursor: isDragging ? "grabbing" : "grab",
-        zIndex: 20,
+        zIndex: isSelected ? 25 : 20,
         touchAction: "none",
         userSelect: "none",
       }}
-      onMouseDown={handleDragStart}
-      onTouchStart={handleDragStart}
+      onMouseDown={(e) => {
+        onSelect?.();
+        handleDragStart(e);
+      }}
+      onTouchStart={(e) => {
+        onSelect?.();
+        handleDragStart(e);
+      }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >

@@ -12,6 +12,8 @@ import PageSelector from "../components/document/PageSelector";
 import usePDFDocument from "../hooks/usePDFDocument";
 import { embedSignatureInPDF, downloadPDF } from "../utils/renderPDF";
 
+let nextSigId = 1;
+
 export default function SignDocument() {
   const {
     pdfFile, pdfUrl, numPages, currentPage,
@@ -27,14 +29,20 @@ export default function SignDocument() {
 
   const [signatureUrl, setSignatureUrl] = useState(null);
   const [signatureBytes, setSignatureBytes] = useState(null);
-  const [signaturePosition, setSignaturePosition] = useState({ x: 100, y: 100 });
-  const [signatureSize, setSignatureSize] = useState({ width: 200, height: 80 });
-  const [opacity, setOpacity] = useState(1);
-  const [rotation, setRotation] = useState(0);
-  const [scale, setScale] = useState(1);
+
+  // Multi-signature state: array of placed signatures
+  const [placedSignatures, setPlacedSignatures] = useState([]);
+  const [selectedSigId, setSelectedSigId] = useState(null);
+
   const [isApplying, setIsApplying] = useState(false);
   const [pdfDragOver, setPdfDragOver] = useState(false);
   const viewerContainerRef = useRef(null);
+
+  // Get the currently selected signature object
+  const selectedSig = placedSignatures.find((s) => s.id === selectedSigId) || null;
+
+  // Signatures visible on the current page
+  const currentPageSignatures = placedSignatures.filter((s) => s.page === currentPage);
 
   const handlePdfDrop = useCallback((e) => {
     e.preventDefault(); setPdfDragOver(false);
@@ -59,35 +67,84 @@ export default function SignDocument() {
     reader.readAsArrayBuffer(file);
   }, []);
 
-  const resetPosition = useCallback(() => {
-    setSignaturePosition({ x: 100, y: 100 }); setSignatureSize({ width: 200, height: 80 });
-    setOpacity(1); setRotation(0); setScale(1);
+  // Place a new signature on the current page
+  const handlePlaceSignature = useCallback(() => {
+    if (!signatureUrl || !signatureBytes) return toast.error("Upload a signature first.");
+    if (!pdfUrl) return toast.error("Upload a PDF first.");
+    const id = nextSigId++;
+    const newSig = {
+      id,
+      page: currentPage,
+      signatureUrl,
+      signatureBytes,
+      position: { x: 100, y: 100 },
+      size: { width: 200, height: 80 },
+      opacity: 1,
+      rotation: 0,
+      scale: 1,
+    };
+    setPlacedSignatures((prev) => [...prev, newSig]);
+    setSelectedSigId(id);
+  }, [signatureUrl, signatureBytes, pdfUrl, currentPage]);
+
+  // Update a specific placed signature
+  const updateSignature = useCallback((id, updates) => {
+    setPlacedSignatures((prev) =>
+      prev.map((s) => (s.id === id ? { ...s, ...updates } : s))
+    );
   }, []);
 
-  const effectiveSize = { width: signatureSize.width * scale, height: signatureSize.height * scale };
+  // Remove a placed signature
+  const removeSignature = useCallback((id) => {
+    setPlacedSignatures((prev) => prev.filter((s) => s.id !== id));
+    setSelectedSigId((prev) => (prev === id ? null : prev));
+  }, []);
+
+  // Get effective size for a signature
+  const getEffectiveSize = (sig) => ({
+    width: sig.size.width * sig.scale,
+    height: sig.size.height * sig.scale,
+  });
 
   const handleApplyAndDownload = useCallback(async () => {
     const pdfBytes = getPdfBytes();
     if (!pdfBytes) return toast.error("Please upload a PDF first.");
-    if (!signatureBytes) return toast.error("Please upload a signature image first.");
+    if (placedSignatures.length === 0) return toast.error("Place at least one signature first.");
     setIsApplying(true);
     try {
       const container = viewerContainerRef.current;
       if (!container) throw new Error("Viewer container not found");
       const pageCanvas = container.querySelector("canvas");
       if (!pageCanvas) throw new Error("PDF page not rendered yet");
+
       const { PDFDocument } = await import("pdf-lib");
-      const tempDoc = await PDFDocument.load(pdfBytes);
-      const page = tempDoc.getPages()[currentPage - 1];
-      const { width: pdfWidth, height: pdfHeight } = page.getSize();
-      const scaleX = pdfWidth / pageCanvas.clientWidth;
-      const scaleY = pdfHeight / pageCanvas.clientHeight;
-      const pdfX = signaturePosition.x * scaleX;
-      const pdfY = pdfHeight - (signaturePosition.y + effectiveSize.height) * scaleY;
-      const modifiedBytes = await embedSignatureInPDF(
-        pdfBytes, signatureBytes, currentPage - 1,
-        pdfX, pdfY, effectiveSize.width * scaleX, effectiveSize.height * scaleY, opacity, rotation,
-      );
+
+      // The canvas displays the current page scaled to fit container width.
+      // All pages are rendered at the same container width, so the display width
+      // is always pageCanvas.clientWidth. The display height varies per page
+      // but we can derive it: displayHeight = displayWidth * (pdfHeight / pdfWidth).
+      // So scaleX = pdfWidth / displayWidth, scaleY = pdfHeight / displayHeight
+      // which simplifies to scaleX = scaleY = pdfWidth / displayWidth.
+      const displayWidth = pageCanvas.clientWidth;
+
+      let modifiedBytes = pdfBytes;
+
+      for (const sig of placedSignatures) {
+        const effSize = getEffectiveSize(sig);
+        const doc = await PDFDocument.load(modifiedBytes);
+        const page = doc.getPages()[sig.page - 1];
+        const { width: pdfWidth, height: pdfHeight } = page.getSize();
+        const scaleFactor = pdfWidth / displayWidth;
+        const pdfX = sig.position.x * scaleFactor;
+        const pdfY = pdfHeight - (sig.position.y + effSize.height) * scaleFactor;
+
+        modifiedBytes = await embedSignatureInPDF(
+          modifiedBytes, sig.signatureBytes, sig.page - 1,
+          pdfX, pdfY, effSize.width * scaleFactor, effSize.height * scaleFactor,
+          sig.opacity, sig.rotation,
+        );
+      }
+
       const name = pdfFile?.name?.replace(/\.pdf$/i, "") || "document";
       downloadPDF(modifiedBytes, `${name}_signed.pdf`);
       toast.success("File never left your device", { icon: "\uD83D\uDD12", duration: 4000 });
@@ -95,7 +152,7 @@ export default function SignDocument() {
       console.error("Apply failed:", err);
       toast.error("Failed to embed signature. Please try again.");
     } finally { setIsApplying(false); }
-  }, [getPdfBytes, signatureBytes, currentPage, signaturePosition, effectiveSize, opacity, rotation, pdfFile]);
+  }, [getPdfBytes, placedSignatures, pdfFile]);
 
   const sliderStyle = {
     width: "100%", accentColor: "#6C63FF", height: 4, cursor: "pointer",
@@ -164,16 +221,33 @@ export default function SignDocument() {
                   <p style={{ color: "#8888AA", fontSize: 13 }}>or click to browse</p>
                 </label>
               ) : (
-                <div ref={viewerContainerRef} style={{ position: "relative", borderRadius: 16, overflow: "hidden" }}>
+                <div
+                  ref={viewerContainerRef}
+                  style={{ position: "relative", borderRadius: 16, overflow: "hidden" }}
+                  onClick={(e) => {
+                    // Deselect when clicking the PDF background (not a signature)
+                    if (e.target === e.currentTarget || e.target.closest("[data-sig-id]") === null) {
+                      setSelectedSigId(null);
+                    }
+                  }}
+                >
                   <PDFViewer pdfUrl={pdfUrl} currentPage={currentPage} onDocumentLoadSuccess={({ numPages: n }) => setNumPages(n)} />
-                  {signatureUrl && (
+                  {currentPageSignatures.map((sig) => (
                     <SignatureDragger
-                      signatureUrl={signatureUrl} position={signaturePosition} size={effectiveSize}
-                      opacity={opacity} rotation={rotation} onPositionChange={setSignaturePosition}
-                      onSizeChange={(s) => setSignatureSize({ width: s.width / scale, height: s.height / scale })}
+                      key={sig.id}
+                      sigId={sig.id}
+                      signatureUrl={sig.signatureUrl}
+                      position={sig.position}
+                      size={getEffectiveSize(sig)}
+                      opacity={sig.opacity}
+                      rotation={sig.rotation}
+                      isSelected={sig.id === selectedSigId}
+                      onSelect={() => setSelectedSigId(sig.id)}
+                      onPositionChange={(pos) => updateSignature(sig.id, { position: pos })}
+                      onSizeChange={(s) => updateSignature(sig.id, { size: { width: s.width / sig.scale, height: s.height / sig.scale } })}
                       containerRef={viewerContainerRef}
                     />
-                  )}
+                  ))}
                 </div>
               )}
             </div>
@@ -243,82 +317,138 @@ export default function SignDocument() {
                 </div>
               )}
 
-              {/* Controls */}
-              <GlassCard animate={false} style={{ padding: "28px 28px" }}>
-                <h2 style={{ fontSize: 13, fontWeight: 600, color: "#E8E8FF", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 24 }}>
-                  Adjust Signature
-                </h2>
-                <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-                  {/* Opacity */}
-                  <div>
-                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 10 }}>
-                      <span style={{ fontSize: 14, color: "#B0B0CC", fontWeight: 500 }}>Opacity</span>
-                      <span style={{
-                        fontSize: 12, color: "#8888AA", fontFamily: "monospace",
-                        background: "rgba(255,255,255,0.04)", padding: "2px 8px", borderRadius: 6,
-                      }}>
-                        {Math.round(opacity * 100)}%
-                      </span>
-                    </div>
-                    <input type="range" min={0} max={100} value={Math.round(opacity * 100)} onChange={(e) => setOpacity(Number(e.target.value) / 100)} style={sliderStyle} />
-                  </div>
-                  {/* Rotation */}
-                  <div>
-                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 10 }}>
-                      <span style={{ fontSize: 14, color: "#B0B0CC", fontWeight: 500 }}>Rotation</span>
-                      <span style={{
-                        fontSize: 12, color: "#8888AA", fontFamily: "monospace",
-                        background: "rgba(255,255,255,0.04)", padding: "2px 8px", borderRadius: 6,
-                      }}>
-                        {rotation}&deg;
-                      </span>
-                    </div>
-                    <input type="range" min={-180} max={180} value={rotation} onChange={(e) => setRotation(Number(e.target.value))} style={sliderStyle} />
-                  </div>
-                  {/* Scale */}
-                  <div>
-                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 10 }}>
-                      <span style={{ fontSize: 14, color: "#B0B0CC", fontWeight: 500 }}>Scale</span>
-                      <span style={{
-                        fontSize: 12, color: "#8888AA", fontFamily: "monospace",
-                        background: "rgba(255,255,255,0.04)", padding: "2px 8px", borderRadius: 6,
-                      }}>
-                        {Math.round(scale * 100)}%
-                      </span>
-                    </div>
-                    <input type="range" min={25} max={200} value={Math.round(scale * 100)} onChange={(e) => setScale(Number(e.target.value) / 100)} style={sliderStyle} />
-                  </div>
+              {/* Place signature button */}
+              {pdfUrl && signatureUrl && (
+                <GlowButton
+                  variant="primary"
+                  size="lg"
+                  onClick={handlePlaceSignature}
+                  style={{ width: "100%" }}
+                >
+                  + Place Signature on Page {currentPage}
+                </GlowButton>
+              )}
 
-                  {/* Divider */}
-                  <div style={{ height: 1, background: "rgba(255,255,255,0.04)" }} />
+              {/* Placed signatures list */}
+              {placedSignatures.length > 0 && (
+                <GlassCard animate={false} style={{ padding: "20px 28px" }}>
+                  <h2 style={{ fontSize: 13, fontWeight: 600, color: "#E8E8FF", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 16 }}>
+                    Placed Signatures ({placedSignatures.length})
+                  </h2>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                    {placedSignatures.map((sig, idx) => (
+                      <div
+                        key={sig.id}
+                        onClick={() => { setSelectedSigId(sig.id); setPage(sig.page); }}
+                        style={{
+                          display: "flex", alignItems: "center", justifyContent: "space-between",
+                          padding: "10px 14px", borderRadius: 10, cursor: "pointer",
+                          background: sig.id === selectedSigId ? "rgba(108,99,255,0.12)" : "rgba(255,255,255,0.03)",
+                          border: `1px solid ${sig.id === selectedSigId ? "rgba(108,99,255,0.4)" : "rgba(255,255,255,0.06)"}`,
+                          transition: "all 0.15s",
+                        }}
+                      >
+                        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                          <img src={sig.signatureUrl} alt="" style={{ height: 24, maxWidth: 60, objectFit: "contain", opacity: 0.7 }} />
+                          <span style={{ fontSize: 13, color: "#B0B0CC" }}>Page {sig.page}</span>
+                        </div>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); removeSignature(sig.id); }}
+                          style={{
+                            background: "none", border: "none", cursor: "pointer",
+                            color: "#8888AA", fontSize: 16, padding: "2px 6px", borderRadius: 6,
+                            transition: "color 0.15s",
+                          }}
+                          onMouseEnter={(e) => { e.currentTarget.style.color = "#ff6b6b"; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.color = "#8888AA"; }}
+                          title="Remove signature"
+                        >
+                          &times;
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </GlassCard>
+              )}
 
-                  {/* Reset */}
-                  <button
-                    onClick={resetPosition}
-                    style={{
-                      width: "100%", padding: "12px 0", borderRadius: 12, fontSize: 14,
-                      fontWeight: 500,
-                      color: "#8888AA", background: "rgba(255,255,255,0.03)",
-                      border: "1px solid rgba(255,255,255,0.08)", cursor: "pointer",
-                      transition: "all 0.2s",
-                    }}
-                    onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.07)"; e.currentTarget.style.color = "#E8E8FF"; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.03)"; e.currentTarget.style.color = "#8888AA"; }}
-                  >
-                    Reset Position
-                  </button>
-                </div>
-              </GlassCard>
+              {/* Controls — only when a signature is selected */}
+              {selectedSig && (
+                <GlassCard animate={false} style={{ padding: "28px 28px" }}>
+                  <h2 style={{ fontSize: 13, fontWeight: 600, color: "#E8E8FF", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 24 }}>
+                    Adjust Selected Signature
+                  </h2>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+                    {/* Opacity */}
+                    <div>
+                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 10 }}>
+                        <span style={{ fontSize: 14, color: "#B0B0CC", fontWeight: 500 }}>Opacity</span>
+                        <span style={{
+                          fontSize: 12, color: "#8888AA", fontFamily: "monospace",
+                          background: "rgba(255,255,255,0.04)", padding: "2px 8px", borderRadius: 6,
+                        }}>
+                          {Math.round(selectedSig.opacity * 100)}%
+                        </span>
+                      </div>
+                      <input type="range" min={0} max={100} value={Math.round(selectedSig.opacity * 100)} onChange={(e) => updateSignature(selectedSigId, { opacity: Number(e.target.value) / 100 })} style={sliderStyle} />
+                    </div>
+                    {/* Rotation */}
+                    <div>
+                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 10 }}>
+                        <span style={{ fontSize: 14, color: "#B0B0CC", fontWeight: 500 }}>Rotation</span>
+                        <span style={{
+                          fontSize: 12, color: "#8888AA", fontFamily: "monospace",
+                          background: "rgba(255,255,255,0.04)", padding: "2px 8px", borderRadius: 6,
+                        }}>
+                          {selectedSig.rotation}&deg;
+                        </span>
+                      </div>
+                      <input type="range" min={-180} max={180} value={selectedSig.rotation} onChange={(e) => updateSignature(selectedSigId, { rotation: Number(e.target.value) })} style={sliderStyle} />
+                    </div>
+                    {/* Scale */}
+                    <div>
+                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 10 }}>
+                        <span style={{ fontSize: 14, color: "#B0B0CC", fontWeight: 500 }}>Scale</span>
+                        <span style={{
+                          fontSize: 12, color: "#8888AA", fontFamily: "monospace",
+                          background: "rgba(255,255,255,0.04)", padding: "2px 8px", borderRadius: 6,
+                        }}>
+                          {Math.round(selectedSig.scale * 100)}%
+                        </span>
+                      </div>
+                      <input type="range" min={25} max={200} value={Math.round(selectedSig.scale * 100)} onChange={(e) => updateSignature(selectedSigId, { scale: Number(e.target.value) / 100 })} style={sliderStyle} />
+                    </div>
+
+                    {/* Divider */}
+                    <div style={{ height: 1, background: "rgba(255,255,255,0.04)" }} />
+
+                    {/* Remove selected */}
+                    <button
+                      onClick={() => removeSignature(selectedSigId)}
+                      style={{
+                        width: "100%", padding: "12px 0", borderRadius: 12, fontSize: 14,
+                        fontWeight: 500,
+                        color: "#ff6b6b", background: "rgba(255,107,107,0.06)",
+                        border: "1px solid rgba(255,107,107,0.15)", cursor: "pointer",
+                        transition: "all 0.2s",
+                      }}
+                      onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,107,107,0.12)"; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255,107,107,0.06)"; }}
+                    >
+                      Remove This Signature
+                    </button>
+                  </div>
+                </GlassCard>
+              )}
 
               {/* Apply button */}
               <GlowButton
                 variant="primary"
                 size="lg"
                 onClick={handleApplyAndDownload}
-                disabled={!pdfUrl || !signatureUrl || isApplying}
+                disabled={!pdfUrl || placedSignatures.length === 0 || isApplying}
                 style={{ width: "100%" }}
               >
-                {isApplying ? "Applying..." : "Apply & Download"}
+                {isApplying ? "Applying..." : `Download with ${placedSignatures.length} Signature${placedSignatures.length !== 1 ? "s" : ""}`}
               </GlowButton>
 
               {(!pdfUrl || !signatureUrl) && (
